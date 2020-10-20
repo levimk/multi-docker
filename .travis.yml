@@ -1,0 +1,39 @@
+#script:
+#  - docker run -e CI=true USERNAME/react-test npm test
+
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  # - docker build -t levim/myproject -f ./path/to/dockerfile ./path/to/build/context
+  - docker build -t levimk/react-app-test -f ./client/Dockerfile.dev ./client
+
+script:
+  # - docker run levimk/myproject runmytests
+  # Remember: React test mode creates a live terminal window by default,
+  # which will cause Travis CI to hang indefinitely. As such, we need to
+  # tell it to close itself after running the test suite. We do this by
+  # asking the Jest to print the coverage report.
+  - docker run levimk/react-app-test npm test -- --coverage
+
+# If all of our tests are successful, we need to build the production
+# version of all of our component modules then push them to Docker Hub
+after_success:
+  # 1. Build production images
+  - docker build -t levimk/multi-client ./client
+  - docker build -t levimk/multi-nginx ./nginx
+  - docker build -t levimk/multi-server ./server
+  - docker build -t levimk/multi-worker ./worker
+
+  # 2. log into the Docker CLI
+  # NB: make sure to use environment variables so you don't expose any
+  # secrets in Github, Docker Hub, or Travis CI!
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+  # 3. Push images to Docker Hub
+  - docker push levimk/multi-client
+  - docker push levimk/multi-nginx
+  - docker push levimk/multi-server
+  - docker push levimk/multi-worker
