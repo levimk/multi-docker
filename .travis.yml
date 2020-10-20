@@ -1,6 +1,3 @@
-#script:
-#  - docker run -e CI=true USERNAME/react-test npm test
-
 sudo: required
 
 services:
@@ -16,7 +13,7 @@ script:
   # which will cause Travis CI to hang indefinitely. As such, we need to
   # tell it to close itself after running the test suite. We do this by
   # asking the Jest to print the coverage report.
-  - docker run levimk/react-app-test npm test -- --coverage
+  - docker run -e CI=true USERNAME/react-test npm test
 
 # If all of our tests are successful, we need to build the production
 # version of all of our component modules then push them to Docker Hub
